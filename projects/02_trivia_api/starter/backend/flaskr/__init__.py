@@ -150,8 +150,7 @@ def create_app(test_config=None):
     given_questions = data.get('previous_questions', None)
     choosen_category = data.get('quiz_category', None)
 
-    category_query = Category.query.filter(Category.type==choosen_category)
-    category_id = category_query[0].format()['id']
+    category_id = int(choosen_category['id'])
     questions_by_category = Question.query.filter(Question.category==category_id)
     all_questions_formatted = [question.format() for question in questions_by_category]
     if given_questions==None:
