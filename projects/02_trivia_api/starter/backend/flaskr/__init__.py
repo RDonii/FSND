@@ -1,6 +1,6 @@
 import os
 from re import search
-from flask import Flask, request, abort, jsonify
+from flask import Flask, json, request, abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import random
@@ -20,11 +20,38 @@ def paginator(request, selection):
 
   return current_questions
 
+def random_choice(previous_items, all_items):
+  restart = True
+  while restart==True:
+    get_random  = random.choice(all_items)
+    for i in previous_items:
+      if get_random['id']==i:
+        restart=True
+        break
+      else:
+        restart=False
+  return get_random
+
 def create_app(test_config=None):
   # create and configure the app
   app = Flask(__name__)
   setup_db(app)
   CORS(app)
+
+  @app.route('/categories', methods = ['GET'])
+  def get_all_categories():
+    all_categories_query=Category.query.order_by(Category.id).all()
+    categories = {}
+    categories_dicts = [category.format() for category in all_categories_query]
+    for dict in categories_dicts:
+      id = dict['id']
+      type = dict['type']
+      item = {id: type}
+      categories.update(item)
+      item = {}
+    return jsonify({
+       'categories': categories
+    })
 
   @app.after_request
   def after_request(response):
@@ -98,34 +125,58 @@ def create_app(test_config=None):
         'currentCategory': 'yanada_yaxshi_amaki'
       })
 
-  '''
-  @TODO: 
-  Create a GET endpoint to get questions based on category. 
+  @app.route('/categories/<int:id>/questions', methods = ['GET'])
+  def question_by_category(id):
+    questions_query = Question.query.filter(Question.category==id)
+    questions_formatted = [question.format() for question in questions_query]
+    
+    category_query = Category.query.filter(Category.id==id).one_or_none
+    if category_query==None:
+      abort(404)
+    category_name = category_query[0].format()['type']
+    
+    questions_by_category = Question.query.all()
 
-  TEST: In the "List" tab / main screen, clicking on one of the 
-  categories in the left column will cause only questions of that 
-  category to be shown. 
-  '''
 
+    return jsonify({
+      'questions': questions_formatted,
+      'total_questions': len(questions_by_category),
+      'current_category': category_name
+    })
+    
+  @app.route('/quizzes', methods = ['POST'])
+  def quiz_question():
+    data = request.get_json()
+    given_questions = data.get('previous_questions', None)
+    choosen_category = data.get('quiz_category', None)
 
-  '''
-  @TODO: 
-  Create a POST endpoint to get questions to play the quiz. 
-  This endpoint should take category and previous question parameters 
-  and return a random questions within the given category, 
-  if provided, and that is not one of the previous questions. 
+    category_query = Category.query.filter(Category.type==choosen_category)
+    category_id = category_query[0].format()['id']
+    questions_by_category = Question.query.filter(Question.category==category_id)
+    all_questions_formatted = [question.format() for question in questions_by_category]
+    if given_questions==None:
+      question = random.choice(all_questions_formatted)
+    else:
+      question = random_choice(given_questions, all_questions_formatted)
 
-  TEST: In the "Play" tab, after a user selects "All" or a category,
-  one question at a time is displayed, the user is allowed to answer
-  and shown whether they were correct or not. 
-  '''
+    return jsonify({
+      'question': question
+    })
 
-  '''
-  @TODO: 
-  Create error handlers for all expected errors 
-  including 404 and 422. 
-  '''
+  @app.errorhandler(404)
+  def not_found(error):
+    return (jsonify({
+      'error': 404,
+      'message': 'not found'
+    }), 404)
   
+  @app.errorhandler(422)
+  def unprocessable(error):
+    return (jsonify({
+      'error': 422,
+      'message': 'unprocessable'
+    }), 422)
+
   return app
 
     
