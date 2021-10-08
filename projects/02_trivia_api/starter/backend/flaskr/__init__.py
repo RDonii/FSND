@@ -38,6 +38,16 @@ def create_app(test_config=None):
   setup_db(app)
   CORS(app)
 
+  @app.after_request
+  def after_request(response):
+    response.headers.add(
+      'Access-Control-Allow-Headers', 'Content-Type, Authorization, true'
+    )
+    response.headers.add(
+      'Access-Control-Allow-Methods', 'PUT, PATCH, GET, POST, DELETE, OPTIONS'
+    )
+    return response
+
   @app.route('/categories', methods = ['GET'])
   def get_all_categories():
     all_categories_query=Category.query.order_by(Category.id).all()
@@ -52,16 +62,6 @@ def create_app(test_config=None):
     return jsonify({
        'categories': categories
     })
-
-  @app.after_request
-  def after_request(response):
-    response.headers.add(
-      'Access-Control-Allow-Headers', 'Content-Type, Authorization, true'
-    )
-    response.headers.add(
-      'Access-Control-Allow-Methods', 'PUT, PATCH, GET, POST, DELETE, OPTIONS'
-    )
-    return response
 
   @app.route('/questions', methods=['GET'])
   def get_all_questions():
@@ -95,7 +95,6 @@ def create_app(test_config=None):
         abort(404)
       
       question_to_delete.delete()
-      return
     except:
       abort(422)
 
@@ -111,7 +110,6 @@ def create_app(test_config=None):
       try:
         n_q = Question(n_question, n_answer, n_cate, n_dif)
         n_q.insert()
-        return
       except:
         abort(422)
     else:
@@ -121,7 +119,7 @@ def create_app(test_config=None):
 
       return jsonify({
         'questions': searched_questions_formatted,
-        'totalQuestions': all_questions,
+        'totalQuestions': len(all_questions),
         'currentCategory': 'yanada_yaxshi_amaki'
       })
 
@@ -133,8 +131,10 @@ def create_app(test_config=None):
     category_query = Category.query.filter(Category.id==id).one_or_none
     if category_query==None:
       abort(404)
-    category_name = category_query[0].format()['type']
-    
+
+    category_query = Category.query.filter(Category.id==id)
+    category_name = category_query[0].type
+
     questions_by_category = Question.query.all()
 
 

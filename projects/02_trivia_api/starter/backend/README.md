@@ -1,111 +1,123 @@
-# Backend - Full Stack Trivia API 
+# Backend - Full Stack Trivia API Reference
 
-### Installing Dependencies for the Backend
+## Getting Started
+- Base URL: At present this app can only be run locally and is not hosted as a base URL. The backend app is hosted at the default, `http://127.0.0.1:5000/`, which is set as a proxy in the frontend configuration. 
+- Authentication: This version of the application does not require authentication or API keys.
 
-1. **Python 3.7** - Follow instructions to install the latest version of python for your platform in the [python docs](https://docs.python.org/3/using/unix.html#getting-and-installing-the-latest-version-of-python)
-
-
-2. **Virtual Enviornment** - We recommend working within a virtual environment whenever using Python for projects. This keeps your dependencies for each project separate and organaized. Instructions for setting up a virual enviornment for your platform can be found in the [python docs](https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/)
-
-
-3. **PIP Dependencies** - Once you have your virtual environment setup and running, install dependencies by naviging to the `/backend` directory and running:
-```bash
-pip install -r requirements.txt
+## Error Handling
+Errors are returned as JSON objects in the following format:
 ```
-This will install all of the required packages we selected within the `requirements.txt` file.
-
-
-4. **Key Dependencies**
- - [Flask](http://flask.pocoo.org/)  is a lightweight backend microservices framework. Flask is required to handle requests and responses.
-
- - [SQLAlchemy](https://www.sqlalchemy.org/) is the Python SQL toolkit and ORM we'll use handle the lightweight sqlite database. You'll primarily work in app.py and can reference models.py. 
-
- - [Flask-CORS](https://flask-cors.readthedocs.io/en/latest/#) is the extension we'll use to handle cross origin requests from our frontend server. 
-
-### Database Setup
-With Postgres running, restore a database using the trivia.psql file provided. From the backend folder in terminal run:
-```bash
-psql trivia < trivia.psql
+{
+    "error": 404,
+    "message": "not found"
+}
 ```
+The API will return three error types when requests fail:
+- 404: Resource Not Found
+- 422: Not Processable
 
-### Running the server
+## Endpoints
 
-From within the `./src` directory first ensure you are working using your created virtual environment.
-
-To run the server, execute:
-
-```bash
-flask run --reload
-```
-
-The `--reload` flag will detect file changes and restart the server automatically.
-
-## ToDo Tasks
-These are the files you'd want to edit in the backend:
-
-1. *./backend/flaskr/`__init__.py`*
-2. *./backend/test_flaskr.py*
-
-
-One note before you delve into your tasks: for each endpoint, you are expected to define the endpoint and response data. The frontend will be a plentiful resource because it is set up to expect certain endpoints and response data formats already. You should feel free to specify endpoints in your own way; if you do so, make sure to update the frontend or you will get some unexpected behavior. 
-
-1. Use Flask-CORS to enable cross-domain requests and set response headers. 
-
-
-2. Create an endpoint to handle GET requests for questions, including pagination (every 10 questions). This endpoint should return a list of questions, number of total questions, current category, categories. 
-
-
-3. Create an endpoint to handle GET requests for all available categories. 
-
-
-4. Create an endpoint to DELETE question using a question ID. 
-
-
-5. Create an endpoint to POST a new question, which will require the question and answer text, category, and difficulty score. 
-
-
-6. Create a POST endpoint to get questions based on category. 
-
-
-7. Create a POST endpoint to get questions based on a search term. It should return any questions for whom the search term is a substring of the question. 
-
-
-8. Create a POST endpoint to get questions to play the quiz. This endpoint should take category and previous question parameters and return a random questions within the given category, if provided, and that is not one of the previous questions. 
-
-
-9. Create error handlers for all expected errors including 400, 404, 422 and 500. 
-
-
-
-## Review Comment to the Students
-```
-This README is missing documentation of your endpoints. Below is an example for your endpoint to get all categories. Please use it as a reference for creating your documentation and resubmit your code. 
-
-Endpoints
-GET '/api/v1.0/categories'
-GET ...
-POST ...
-DELETE ...
-
-GET '/api/v1.0/categories'
+### GET '/api/v1.0/categories'
 - Fetches a dictionary of categories in which the keys are the ids and the value is the corresponding string of the category
-- Request Arguments: None
-- Returns: An object with a single key, categories, that contains a object of id: category_string key:value pairs. 
-{'1' : "Science",
-'2' : "Art",
-'3' : "Geography",
-'4' : "History",
-'5' : "Entertainment",
-'6' : "Sports"}
+- Request Argument: None
+- Returns: An object with a single key, categories, that contains a object of id: category_string key: value pairs
+    {'1' : "Science",
+     '2' : "Art",
+     '3' : "Geography",
+     '4' : "History",
+     '5' : "Entertainment",
+     '6' : "Sports"}
+### GET '/api/v1.0/questions'
+- Fetches a paginated set of questions, a total number of questions, all categories and current category string.
+- Request Argument: page = integer
+- Returns: A json object contains 10 paginated questions, number of total questions, dictionary object including all categories and current category string.
+    {
+        'questions': [
+            {
+                'id': 1,
+                'question': 'This is a question',
+                'answer': 'This is an answer', 
+                'difficulty': 5,
+                'category': 2
+            },
+        ],
+        'totalQuestions': 100,
+        'categories': { '1' : "Science",
+        '2' : "Art",
+        '3' : "Geography",
+        '4' : "History",
+        '5' : "Entertainment",
+        '6' : "Sports" },
+        'currentCategory': 'History'
+    }
+### DELETE '/api/v1.0/questions/<int:id>
+- Deletes a specified question using the id of the question
+- Request Arguments: id - integer
+- Returns: The appropriate HTTP status code
 
-```
+### POST '/api/v1.0/questions'
+- Sends a post request in order to add a new question
+- Request body:
+    {
+        'question':  'Heres a new question string',
+        'answer':  'Heres a new answer string',
+        'difficulty': 1,
+        'category': 3,
+    }
+- Returns: The appropriate HTTP status code
 
+### POST '/api/v1.0/questions'
+- Sends a post request in order to search for a specific question by search term.
+- Request body:
+    {
+        'searchTerm': 'this is the term the user is looking for'
+    }
+- Returns: any array of questions, a number of total questions and the current category string
+    {
+        'questions': [
+            {
+                'id': 1,
+                'question': 'This is a question',
+                'answer': 'This is an answer', 
+                'difficulty': 5,
+                'category': 5
+            },
+        ],
+        'totalQuestions': 100,
+        'currentCategory': 'Entertainment'
+    }
 
-## Testing
-To run the tests, run
-```
-dropdb trivia_test
-createdb trivia_test
-psql trivia_test < trivia.psql
-python test_flaskr.py
-```
+### GET '/api/v1.0/categories/<int:id>/questions'
+- Fetches questions for a category specified by id request argument
+- Request Arguments: id - integer
+- Returns: An object with questions for the specified category, number of total questions and current category string
+    {
+        'questions': [
+            {
+                'id': 1,
+                'question': 'This is a question',
+                'answer': 'This is an answer', 
+                'difficulty': 5,
+                'category': 4
+            },
+        ],
+        'totalQuestions': 100,
+        'currentCategory': 'History'
+    }
+
+### POST '/api/v1.0/quizzes'
+- Sends a post requested in order to get the next question
+- Request body:
+{'previous_questions':  an array of question id's such as [1, 4, 20, 15]
+'quiz_category': a string of the current category }
+- Returns: a single a new question object
+    {
+        'question': {
+            'id': 1,
+            'question': 'This is a question',
+            'answer': 'This is an answer', 
+            'difficulty': 5,
+            'category': 4
+        }
+    }
