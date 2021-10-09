@@ -89,12 +89,14 @@ def create_app(test_config=None):
 
   @app.route('/questions/<int:id>', methods = ['DELETE'])
   def delete_question(id):
+    question_to_delete = Question.query.filter(Question.id==id).one_or_none()
+    if question_to_delete==None:
+      abort(404)
     try:
-      question_to_delete = Question.query.filter(Question.id==id).one_or_none()
-      if question_to_delete==None:
-        abort(404)
-      
       question_to_delete.delete()
+      return jsonify({
+        'deleted': id
+      })
     except:
       abort(422)
 
@@ -107,11 +109,17 @@ def create_app(test_config=None):
     n_dif = data.get('difficulty', None)
     n_cate = data.get('category', None)
     if s_term==None:
-      try:
-        n_q = Question(n_question, n_answer, n_cate, n_dif)
-        n_q.insert()
-      except:
+      if len(n_question)*len(n_answer) == 0:
         abort(422)
+      else:
+        try:
+          n_q = Question(n_question, n_answer, n_cate, n_dif)
+          n_q.insert()
+          return jsonify({
+            'added': n_q.id
+          })
+        except:
+          abort(422)
     else:
       searched_questions = Question.query.filter(Question.question.ilike(f'%{s_term}%'))
       searched_questions_formatted = [question.format() for question in searched_questions]
@@ -153,7 +161,7 @@ def create_app(test_config=None):
     category_id = int(choosen_category['id'])
     questions_by_category = Question.query.filter(Question.category==category_id)
     all_questions_formatted = [question.format() for question in questions_by_category]
-    if given_questions==None:
+    if given_questions==None or len(given_questions)==0:
       question = random.choice(all_questions_formatted)
     else:
       question = random_choice(given_questions, all_questions_formatted)

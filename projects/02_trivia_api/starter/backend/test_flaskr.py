@@ -5,6 +5,9 @@ from flask_sqlalchemy import SQLAlchemy
 
 from flaskr import create_app
 from models import setup_db, Question, Category
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 class TriviaTestCase(unittest.TestCase):
@@ -15,7 +18,7 @@ class TriviaTestCase(unittest.TestCase):
         self.app = create_app()
         self.client = self.app.test_client
         self.database_name = "trivia_test"
-        self.database_path = "postgresql://{}:{}@{}/{}".format('rdoni','12814','localhost:5432', self.database_name)
+        self.database_path = "postgresql://{}:{}@{}/{}".format(os.getenv('USER'),os.getenv('PASSWORD'),'localhost:5432', self.database_name)
         setup_db(self.app, self.database_path)
 
         # binds the app to the current context
@@ -29,14 +32,14 @@ class TriviaTestCase(unittest.TestCase):
         """Executed after reach test"""
         pass
 
-    def get_all_categories(self):
+    def test_get_all_categories(self):
         res = self.client().get('/categories')
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
         self.assertTrue(len(data['categories']))
 
-    def get_all_questions(self):
+    def test_get_all_questions(self):
         res = self.client().get('/questions')
         data = json.loads(res.data)
 
@@ -45,39 +48,39 @@ class TriviaTestCase(unittest.TestCase):
         self.assertTrue(len(data['questions']))
         self.assertTrue(len(data['categories']))
     
-    def error_404_for_get_all_questions(self):
+    def test_error_404_for_get_all_questions(self):
         res = self.client().get('/question?page=1000')
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 404)
         self.assertEqual(data['message'], 'not found')
 
-    def delete_question_by_given_id(self):
-        res = self.client().delete('/questions/5')
+    def test_delete_question_by_given_id(self):
+        res = self.client().delete('/questions/10')
 
         self.assertEqual(res.status_code, 200)
     
-    def error_404_for_delete_question(self):
-        res = self.client().delete('/questions/10000')
+    def test_error_404_for_delete_question(self):
+        res = self.client().delete('/questions/1000')
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 404)
         self.assertEqual(data['message'], 'not found')
 
-    def post_new_question(self):
+    def test_post_new_question(self):
         res = self.client().post('/questions', json={"question": "new question", "answer": "new answer", "difficulty": 5, "category": 5})
         
         self.assertEqual(res.status_code, 200)
 
-    def search_question(self):
-        res = self.client().post('/questions', json={"searchTerm": "box"})
+    def test_search_question(self):
+        res = self.client().post('/questions', json={"searchTerm": "new"})
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
         self.assertTrue(len(data['questions']))
-        self.assertTrue(data['all_questions'])
+        self.assertTrue(data['totalQuestions'])
     
-    def get_questions_by_category(self):
+    def test_get_questions_by_category(self):
         res = self.client().get('/categories/6/questions')
         data = json.loads(res.data)
 
@@ -86,7 +89,7 @@ class TriviaTestCase(unittest.TestCase):
         self.assertTrue(data['total_questions'])
         self.assertEqual(data['current_category'], 'Sports')
     
-    def play_quiz(self):
+    def test_play_quiz(self):
         res = self.client().post('/quizzes', json = {"previous_questions": [4], "quiz_category": {'id': '6', 'type': 'Sports'}})
         data = json.loads(res.data)
 
