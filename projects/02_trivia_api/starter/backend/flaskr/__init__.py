@@ -121,25 +121,28 @@ def create_app(test_config=None):
         except:
           abort(422)
     else:
-      searched_questions = Question.query.filter(Question.question.ilike(f'%{s_term}%'))
-      searched_questions_formatted = [question.format() for question in searched_questions]
-      all_questions = Question.query.all()
+      try:
+        searched_questions = Question.query.filter(Question.question.ilike(f'%{s_term}%'))
+        searched_questions_formatted = [question.format() for question in searched_questions]
+        all_questions = Question.query.all()
 
-      return jsonify({
-        'questions': searched_questions_formatted,
-        'totalQuestions': len(all_questions),
-        'currentCategory': 'yanada_yaxshi_amaki'
-      })
+        return jsonify({
+          'questions': searched_questions_formatted,
+          'totalQuestions': len(all_questions),
+          'currentCategory': 'yanada_yaxshi_amaki'
+        })
+      except:
+        abort(500)
 
   @app.route('/categories/<int:id>/questions', methods = ['GET'])
   def question_by_category(id):
-    questions_query = Question.query.filter(Question.category==id)
-    questions_formatted = [question.format() for question in questions_query]
-    
-    category_query = Category.query.filter(Category.id==id).one_or_none
+    category_query = Category.query.filter(Category.id==id).one_or_none()
     if category_query==None:
       abort(404)
 
+    questions_query = Question.query.filter(Question.category==id)
+    questions_formatted = [question.format() for question in questions_query]
+    
     category_query = Category.query.filter(Category.id==id)
     category_name = category_query[0].type
 
@@ -154,21 +157,28 @@ def create_app(test_config=None):
     
   @app.route('/quizzes', methods = ['POST'])
   def quiz_question():
-    data = request.get_json()
-    given_questions = data.get('previous_questions', None)
-    choosen_category = data.get('quiz_category', None)
+    try:
+      data = request.get_json()
+      given_questions = data.get('previous_questions', None)
+      choosen_category = data.get('quiz_category', None)
+      category_id = int(choosen_category['id'])
 
-    category_id = int(choosen_category['id'])
-    questions_by_category = Question.query.filter(Question.category==category_id)
-    all_questions_formatted = [question.format() for question in questions_by_category]
-    if given_questions==None or len(given_questions)==0:
-      question = random.choice(all_questions_formatted)
-    else:
-      question = random_choice(given_questions, all_questions_formatted)
+      if category_id==0:
+        questions = Question.query.all()
+      else:
+        questions = Question.query.filter(Question.category==category_id)
+      
+      all_questions_formatted = [question.format() for question in questions]
+      if given_questions==None or len(given_questions)==0:
+        question = random.choice(all_questions_formatted)
+      else:
+        question = random_choice(given_questions, all_questions_formatted)
 
-    return jsonify({
-      'question': question
-    })
+      return jsonify({
+        'question': question
+      })
+    except:
+      abort(500)
 
   @app.errorhandler(404)
   def not_found(error):
@@ -183,6 +193,13 @@ def create_app(test_config=None):
       'error': 422,
       'message': 'unprocessable'
     }), 422)
+
+  @app.errorhandler(500)
+  def interla_server_error(error):
+    return (jsonify({
+      'error': 500,
+      'message': 'internal server error'
+    }), 500)
 
   return app
 

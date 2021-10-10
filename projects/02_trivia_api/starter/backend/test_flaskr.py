@@ -56,7 +56,7 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['message'], 'not found')
 
     def test_delete_question_by_given_id(self):
-        res = self.client().delete('/questions/10')
+        res = self.client().delete('/questions/16')
 
         self.assertEqual(res.status_code, 200)
     
@@ -69,8 +69,17 @@ class TriviaTestCase(unittest.TestCase):
 
     def test_post_new_question(self):
         res = self.client().post('/questions', json={"question": "new question", "answer": "new answer", "difficulty": 5, "category": 5})
-        
+        data = json.loads(res.data)
+
         self.assertEqual(res.status_code, 200)
+        self.assertTrue(data['added'])
+
+    def test_422_error_post_new_question_with_empty_value(self):
+        res = self.client().post('/questions', json = {"question": "new question 2", "answer": "", "difficulty": 5, "category": 5})
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 422)
+        self.assertEqual(data['message'], 'unprocessable')
 
     def test_search_question(self):
         res = self.client().post('/questions', json={"searchTerm": "new"})
@@ -80,15 +89,28 @@ class TriviaTestCase(unittest.TestCase):
         self.assertTrue(len(data['questions']))
         self.assertTrue(data['totalQuestions'])
     
+    def test_500_error_search_question(self):
+        res = self.client().post('/questions')
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 500)
+        self.assertEqual(data['message'], 'internal server error')
+
     def test_get_questions_by_category(self):
         res = self.client().get('/categories/6/questions')
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
-        self.assertTrue(len(data['questions']))
         self.assertTrue(data['total_questions'])
         self.assertEqual(data['current_category'], 'Sports')
     
+    def test_404_error_get_questions_by_category(self):
+        res = self.client().get('/categories/600/questions')
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 404)
+        self.assertEqual(data['message'], 'not found')
+
     def test_play_quiz(self):
         res = self.client().post('/quizzes', json = {"previous_questions": [4], "quiz_category": {'id': '6', 'type': 'Sports'}})
         data = json.loads(res.data)
@@ -96,6 +118,13 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertTrue(len(data['question']))
         self.assertNotEqual(data['question']['id'], 4)
+
+    def test_500_error_test_play_quiz(self):
+        res = self.client().post('/quizzes', json = {"previous_questions": [4], "quiz_category": {'id': '-1', 'type': 'Amaki'}})
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 500)
+        self.assertEqual(data['message'], 'internal server error')
 
 
 # Make the tests conveniently executable
