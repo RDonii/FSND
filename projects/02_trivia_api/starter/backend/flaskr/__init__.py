@@ -121,18 +121,15 @@ def create_app(test_config=None):
         except:
           abort(422)
     else:
-      try:
-        searched_questions = Question.query.filter(Question.question.ilike(f'%{s_term}%'))
-        searched_questions_formatted = [question.format() for question in searched_questions]
-        all_questions = Question.query.all()
+      searched_questions = Question.query.filter(Question.question.ilike(f'%{s_term}%'))
+      searched_questions_formatted = [question.format() for question in searched_questions]
+      all_questions = Question.query.all()
 
-        return jsonify({
-          'questions': searched_questions_formatted,
-          'totalQuestions': len(all_questions),
-          'currentCategory': 'yanada_yaxshi_amaki'
-        })
-      except:
-        abort(500)
+      return jsonify({
+        'questions': searched_questions_formatted,
+        'totalQuestions': len(all_questions),
+        'currentCategory': 'yanada_yaxshi_amaki'
+      })
 
   @app.route('/categories/<int:id>/questions', methods = ['GET'])
   def question_by_category(id):

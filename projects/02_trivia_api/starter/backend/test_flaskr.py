@@ -56,7 +56,7 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['message'], 'not found')
 
     def test_delete_question_by_given_id(self):
-        res = self.client().delete('/questions/16')
+        res = self.client().delete('/questions/14')
 
         self.assertEqual(res.status_code, 200)
     
@@ -81,7 +81,7 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 422)
         self.assertEqual(data['message'], 'unprocessable')
 
-    def test_search_question(self):
+    def test_search_question_found(self):
         res = self.client().post('/questions', json={"searchTerm": "new"})
         data = json.loads(res.data)
 
@@ -89,12 +89,13 @@ class TriviaTestCase(unittest.TestCase):
         self.assertTrue(len(data['questions']))
         self.assertTrue(data['totalQuestions'])
     
-    def test_500_error_search_question(self):
-        res = self.client().post('/questions')
+    def test_search_question_not_found(self):
+        res = self.client().post('/questions', json={"searchTerm": 'Some thing not in question'})
         data = json.loads(res.data)
 
-        self.assertEqual(res.status_code, 500)
-        self.assertEqual(data['message'], 'internal server error')
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(len(data['questions']), 0)
+        self.assertTrue(data['totalQuestions'])
 
     def test_get_questions_by_category(self):
         res = self.client().get('/categories/6/questions')
