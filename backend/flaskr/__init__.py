@@ -1,10 +1,7 @@
-import os
-from re import search
-from flask import Flask, json, request, abort, jsonify
+from flask import Flask, request, abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import random
-from sqlalchemy import or_
 
 from models import setup_db, Question, Category
 
@@ -200,4 +197,8 @@ def create_app(test_config=None):
 
   return app
 
+app = create_app()
+
+if __name__=='__main__':
+  app.run(debug=True)
     
